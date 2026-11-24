@@ -74,3 +74,7 @@ A data collection script is not included in this repository.
 OpenReview Terms: https://openreview.net/legal/terms
 
 "By submitting a Comment or Configuration Record (and their accompanying Edits) to OpenReview the Submitter agrees that it shall be released to the public under the Creative Commons Attribution 4.0 International (CC BY 4.0) license."
+
+## Privacy
+
+Review text and reviewer identifiers can be sensitive even when public.
