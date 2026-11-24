@@ -1,6 +1,6 @@
 # Peer Review GNN Artifact
 
-Supplementary artifact for `"Reliability of graph based consolidation of reviews"`, an Experiment, Analysis & Benchmark (EA&B) submission to VLDB 2027 / PVLDB Volume 20.
+Supplementary artifact for "Reliability of graph based consolidation of reviews", an Experiment, Analysis & Benchmark (EA&B) submission to VLDB 2027 / PVLDB Volume 20.
 
 - Repository: https://github.com/kram2006/OpenReviewData-PGReview
 - Citation metadata: `CITATION.cff`
@@ -12,8 +12,8 @@ The artifact contains source code and open review datasets. The paper contains t
 | Path | Purpose |
 |---|---|
 | `rk_gnn.py` | End-to-end preprocessing, embedding, GNN training, evaluation, and output generation |
-| `run.sh` | Fresh-environment setup and run script for Linux/macOS |
-| `run.ps1` | Fresh-environment setup and run script for Windows PowerShell |
+| `run.sh` | Fresh-environment setup and run script for Linux |
+| `run.ps1` | Fresh-environment setup and run script for Windows (NVIDIA GPU) PowerShell |
 | `requirements.txt` | Direct Python dependencies used by the setup scripts |
 | `requirements-lock.txt` | Full frozen dependency set for the tested environment |
 | `iclr_reviews_24.csv` | ICLR 2024 review records |
@@ -26,13 +26,13 @@ The artifact contains source code and open review datasets. The paper contains t
 
 ## Run
 
-Linux/macOS:
+Linux:
 
 ```bash
 bash run.sh
 ```
 
-Windows PowerShell:
+Windows (NVIDIA GPU) PowerShell:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\run.ps1
@@ -46,7 +46,7 @@ Both scripts create `.venv`, install `requirements.txt`, and run `python rk_gnn.
 
 ## Tested Environment
 
-The following versions installed and imported successfully in a fresh virtual environment:
+The following versions installed and imported successfully in a fresh virtual environment on Windows 11 with a GPU present:
 
 | Component | Version |
 |---|---:|
@@ -62,7 +62,7 @@ The following versions installed and imported successfully in a fresh virtual en
 | tqdm | 4.70.0 |
 | sentencepiece | 0.2.3 |
 
-Recorded paper hardware: cloud GPU with 48 GB VRAM. The GPU model and paper-run library versions are not present in the repository. First runs download Hugging Face checkpoints unless they are pre-cached.
+First runs download Hugging Face checkpoints unless they are pre-cached.
 
 The script creates a reviewer identity matrix of about 2.92 GiB for 2024, 8.54 GiB for 2025, and 21.29 GiB for 2026, before activations, gradients, optimizer states, and embeddings.
 
