@@ -50,6 +50,8 @@ Both scripts create a virtual environment, install `requirements.txt`, and run `
 
 The code requires an NVIDIA GPU with a driver that supports CUDA 13.0.
 
+Paper experiments ran on a cloud GPU with 48 GB VRAM.
+
 The following versions installed and imported successfully in a fresh virtual environment on Windows 11 with a GPU present:
 
 | Component | Version |
