@@ -32,6 +32,8 @@ Linux:
 bash run.sh
 ```
 
+`run.sh` has not been tested; only the Windows 11 + GPU install and import check was done.
+
 Windows (NVIDIA GPU) PowerShell:
 
 ```powershell
