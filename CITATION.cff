@@ -1,0 +1,44 @@
+cff-version: 1.2.0
+message: "If you use this artifact, please cite the paper."
+title: "Supplementary artifact for Reliability of graph based consolidation of reviews"
+type: software
+authors:
+  - family-names: Alladaboina
+    given-names: Suhas
+    affiliation: "Department of Computer Science and Engineering, IIT Bombay, Powai"
+    city: Mumbai
+    region: Maharashtra
+    country: IN
+    email: suhasalladaboina@iitb.ac.in
+  - family-names: Kalari
+    given-names: Ramakrishna Narasimha
+    affiliation: "Department of Computer Science and Engineering, IIT Hyderabad, Kandi"
+    city: Hyderabad
+    country: IN
+    email: kalariramakrishna12345@gmail.com
+  - family-names: Kundu
+    given-names: Suman
+    affiliation: "Wadhwani School of Data Science and Artificial Intelligence, IIT Madras"
+    city: Chennai
+    region: Tamil Nadu
+    country: IN
+    email: suman@sumankundu.info
+repository-code: "https://github.com/kram2006/OpenReviewData-PGReview"
+url: "https://github.com/kram2006/OpenReviewData-PGReview"
+keywords:
+  - peer review
+  - graph neural networks
+  - natural language processing
+  - reproducibility
+preferred-citation:
+  type: conference-paper
+  title: "Reliability of graph based consolidation of reviews"
+  year: 2027
+  authors:
+    - family-names: Alladaboina
+      given-names: Suhas
+    - family-names: Kalari
+      given-names: Ramakrishna Narasimha
+    - family-names: Kundu
+      given-names: Suman
+  collection-title: "Proceedings of the VLDB Endowment"
