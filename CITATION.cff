@@ -30,5 +30,5 @@ keywords:
   - graph neural networks
   - natural language processing
   - reproducibility
-license: CC-BY-4.0
+license: MIT
 notes: "Under review at VLDB 2027."

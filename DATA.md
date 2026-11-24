@@ -70,12 +70,8 @@ OpenReview references:
 
 A data collection script is not included in this repository.
 
-## Terms
+## Licence
 
 OpenReview Terms: https://openreview.net/legal/terms
 
-The Terms define tasked reviews as Comments and state that Comments are released under CC BY 4.0. They apply CC0 1.0 to metadata only to the extent a copyright interest exists. Article licenses are separate. Users must not claim rights in downloaded submissions beyond what the Terms and applicable licenses permit.
-
-## Privacy
-
-Review text and reviewer identifiers can be sensitive even when public. Generated embeddings, learned paper embeddings, and prediction files are excluded from Git.
+"By submitting a Comment or Configuration Record (and their accompanying Edits) to OpenReview the Submitter agrees that it shall be released to the public under the Creative Commons Attribution 4.0 International (CC BY 4.0) license."

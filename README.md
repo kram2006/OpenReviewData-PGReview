@@ -21,7 +21,7 @@ The artifact contains source code and open review datasets. The paper contains t
 | `iclr_reviews_26.csv` | ICLR 2026 review records |
 | `DATA.md` | Dataset provenance, schema, counts, checksums, and terms |
 | `CITATION.cff` | Citation metadata |
-| `LICENSE` | Creative Commons Attribution 4.0 International license |
+| `LICENSE` | MIT License for the code |
 | `.gitignore` | Excludes environments, caches, embeddings, and generated outputs |
 
 ## Run
