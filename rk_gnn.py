@@ -1,3 +1,10 @@
+"""Run the peer-review GNN artifact.
+
+Reads three ICLR review CSVs, embeds review summaries with three language models,
+builds heterogeneous paper-reviewer graphs, trains the GNN, and writes generated
+embeddings and prediction files.
+"""
+
 import gc
 import os
 import random
@@ -11,25 +18,13 @@ from torch_geometric.data import HeteroData
 from torch_geometric.nn import HeteroConv, SAGEConv
 from transformers import AutoTokenizer, AutoModel
 
-# ============================================================
-# 0. MOUNT GOOGLE DRIVE
-# ============================================================
-# if not os.path.exists('/content/drive'):
-#     from google.colab import drive
-#     drive.mount('/content/drive')
-
-# ============================================================
-# 1. CONFIGURATION
-# ============================================================
+# Configuration
 plm = {"scibert":"allenai/scibert_scivocab_uncased", "scidebertafull": "KISTI-AI/Scideberta-full", "scidebertacs":"KISTI-AI/scideberta-cs"}
 for plmodel in plm.keys():
-  #, "iclr_reviews_25", "neurips_reviews_25"
   for csv in ["iclr_reviews_24", "iclr_reviews_25", "iclr_reviews_26"]:
     print(csv, plmodel)
-    # CSV_FILE = "/content/drive/MyDrive/"+csv+".csv"
     CSV_FILE = "./"+csv+".csv"
     MODEL_NAME = plm[plmodel]
-    # EMBEDDING_FILE = "/content/drive/MyDrive/"+csv+"_"+plmodel+"_embeddings.dat"
     EMBEDDING_FILE = "./"+csv+"_"+plmodel+"_embeddings.dat"
     MAX_LENGTH = 256
     BATCH_SIZE = 8
@@ -39,10 +34,6 @@ for plmodel in plm.keys():
     DROPOUT = 0.3
     RANDOM_SEED = 42
 
-    # ============================================================
-    # 2. RANDOM SEED
-    # ============================================================
-
     random.seed(RANDOM_SEED)
     np.random.seed(RANDOM_SEED)
     torch.manual_seed(RANDOM_SEED)
@@ -50,27 +41,15 @@ for plmodel in plm.keys():
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(RANDOM_SEED)
 
-    # ============================================================
-    # 4. DEVICE
-    # ============================================================
-
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print("Device:", device)
     if torch.cuda.is_available():
         print("GPU:", torch.cuda.get_device_name(0))
 
-    # ============================================================
-    # 5. READ CSV
-    # ============================================================
-
     df = pd.read_csv(CSV_FILE, low_memory=False)
     print("\nDataset shape:", df.shape)
     print("\nColumns:")
     print(df.columns.tolist())
-
-    # ============================================================
-    # 6. REQUIRED COLUMNS
-    # ============================================================
 
     required_columns = [
         "submission_id",
@@ -89,43 +68,23 @@ for plmodel in plm.keys():
     if missing:
         raise ValueError("Missing columns: " + str(missing))
 
-    # ============================================================
-    # 7. CLEAN DATA
-    # ============================================================
-
     df = df[required_columns].copy()
-    # Remove rows without required IDs
     df = df.dropna(subset=["submission_id", "reviewer_id", "review_id", "soundness", "presentation", "contribution", "confidence"])
-    # Summary text
     df["summary"] = (df["summary"].fillna("").astype(str))
-    # Numerical review attributes
     numeric_columns = ["rating"]
     for column in numeric_columns:
         df[column] = pd.to_numeric(df[column], errors="coerce")
-    # Remove reviews without rating
     df = df.dropna(subset=["rating"])
     df = df.reset_index(drop=True)
     print("\nClean dataset:", df.shape)
-
-    # ============================================================
-    # 8. CREATE PAPER IDs
-    # ============================================================
 
     paper_ids = (df["submission_id"].unique())
     paper_to_idx = {paper_id: i for i, paper_id in enumerate(paper_ids)}
     df["paper_idx"] = (df["submission_id"].map(paper_to_idx))
 
-    # ============================================================
-    # 9. CREATE REVIEWER IDs
-    # ============================================================
-
     reviewer_ids = (df["reviewer_id"].unique())
     reviewer_to_idx = {reviewer_id: i for i, reviewer_id in enumerate(reviewer_ids)}
     df["reviewer_idx"] = (df["reviewer_id"].map(reviewer_to_idx))
-
-    # ============================================================
-    # 10. CREATE REVIEW IDs
-    # ============================================================
 
     review_ids = (df["review_id"].unique())
     review_to_idx = {review_id: i for i, review_id in enumerate(review_ids)}
@@ -134,20 +93,11 @@ for plmodel in plm.keys():
     print("Number of reviewers:", len(reviewer_ids))
     print("Number of reviews:", len(review_ids))
 
-    # ============================================================
-    # 11. LOAD SCI-BERT
-    # ============================================================
-
     tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
     model = AutoModel.from_pretrained(MODEL_NAME)
     model = model.to(device)
     model.eval()
     print("\nModel loaded.")
-
-
-    # ============================================================
-    # 12. SCI-BERT EMBEDDING FUNCTION
-    # ============================================================
 
     @torch.no_grad()
     def embed_batch(texts):
@@ -157,10 +107,6 @@ for plmodel in plm.keys():
         attention_mask = encoded["attention_mask"].to(device)
         outputs = model(input_ids=input_ids, attention_mask=attention_mask)
         hidden = outputs.last_hidden_state
-
-        # --------------------------------------------------------
-        # Mean pooling
-        # --------------------------------------------------------
         mask = attention_mask.unsqueeze(-1).expand(hidden.size()).float()
         hidden = hidden * mask
         summed = hidden.sum(dim=1)
@@ -168,10 +114,6 @@ for plmodel in plm.keys():
         embeddings = (summed / counts)
         return embeddings.cpu()
 
-
-    # ============================================================
-    # 13. GENERATE / LOAD SCI-BERT EMBEDDINGS
-    # ============================================================
     number_reviews = len(df)
     embedding_dimension = 768
     summary_embeddings = None # Initialize as None
@@ -226,75 +168,34 @@ for plmodel in plm.keys():
 
     print("Embedding shape:", summary_embeddings.shape)
 
-    # ============================================================
-    # 14. CREATE HETEROGENEOUS GRAPH
-    # ============================================================
     data = HeteroData()
-    # ============================================================
-    # PAPER NODES
-    # ============================================================
-    # Paper node features
-    # We do NOT duplicate review embeddings here.
-    #
-    # Paper features can initially be zeros.  The GNN will learn paper representations from reviewer/review information.
     number_papers = len(paper_ids)
     data["paper"].x = torch.zeros((number_papers, 1), dtype=torch.float)
 
-    # ============================================================
-    # REVIEWER NODES
-    # ============================================================
     number_reviewers = len(reviewer_ids)
-    # Reviewer identity embedding
-    #
-    # Each reviewer starts with a learnable/unique  one-hot-like feature.
     data["reviewer"].x = torch.eye(number_reviewers, dtype=torch.float)
-    # ============================================================
-    # REVIEWER -> PAPER EDGES
-    # ============================================================
     source = torch.tensor(df["reviewer_idx"].values, dtype=torch.long)
     target = torch.tensor(df["paper_idx"].values, dtype=torch.long)
     edge_index = torch.stack([source, target], dim=0)
     data["reviewer", "reviews", "paper"].edge_index = edge_index
-    # ============================================================
-    # PAPER -> REVIEWER REVERSE EDGES
-    # ============================================================
     data["paper", "rev_by", "reviewer"].edge_index = edge_index.flip(0)
-    # ============================================================
-    # 15. REVIEW FEATURES
-    # ============================================================
-    # For every review:
-    #
-    # model(summary) = 768
 
     review_numeric = df[["rating"]].fillna(0).values
     review_numeric = torch.tensor(review_numeric, dtype=torch.float)
-    # Ensure summary_embeddings is not None and is a numpy array
     if summary_embeddings is None:
         raise ValueError("Summary embeddings could not be loaded or generated.")
-    # Create a writable copy to avoid UserWarning from PyTorch
     summary_tensor = torch.from_numpy(np.asarray(summary_embeddings).copy()).float()
     review_edge_features = torch.cat([summary_tensor, review_numeric], dim=1)
     print("\nReview edge feature shape:", review_edge_features.shape)
 
-    # ============================================================
-    # 16. STORE REVIEW FEATURES
-    # ============================================================
     data["reviewer", "reviews", "paper"].edge_attr = (review_edge_features)
     data["paper", "rev_by", "reviewer"].edge_attr = (review_edge_features)
-    # ============================================================
-    # 17. PAPER TARGET = RATING
-    # ============================================================
 
-    # Multiple reviewers can rate the same paper. We calculate the mean rating for each paper.
     paper_rating = (df.groupby("paper_idx")["rating"].mean())
     rating_target = torch.zeros(number_papers, dtype=torch.float)
     for paper_idx, rating in (paper_rating.items()):
         rating_target[int(paper_idx)] = float(rating)
     data["paper"].y = rating_target
-
-    # ============================================================
-    # 18. PRINT GRAPH
-    # ============================================================
 
     print("\n==============================")
     print("HETEROGENEOUS GRAPH")
@@ -306,15 +207,9 @@ for plmodel in plm.keys():
     print("Review edges:", data["reviewer", "reviews", "paper"].edge_index.shape)
     print("Review features:", data["reviewer", "reviews", "paper"].edge_attr.shape)
 
-    # ============================================================
-    # 19. MOVE GRAPH TO GPU
-    # ============================================================
 
     data = data.to(device)
 
-    # ============================================================
-    # 20. HETEROGENEOUS GNN
-    # ============================================================
     class ReviewGNN(nn.Module):
         def __init__(self, reviewer_input, paper_input, edge_dim, hidden_dim=128):
             super().__init__()
@@ -370,20 +265,11 @@ for plmodel in plm.keys():
             return (paper_embedding, rating.squeeze(-1))
 
 
-    # ============================================================
-    # 21. CREATE MODEL
-    # ============================================================
     model = ReviewGNN(reviewer_input=data["reviewer"].x.shape[1], paper_input=data["paper"].x.shape[1],
                       edge_dim=data["reviewer", "reviews", "paper"].edge_attr.shape[1],
                       hidden_dim=HIDDEN_DIM).to(device)
-    # ============================================================
-    # 22. OPTIMIZER
-    # ============================================================
     optimizer = torch.optim.Adam(model.parameters(), lr=LEARNING_RATE)
     loss_function = nn.MSELoss()
-    # ============================================================
-    # 23. TRAIN / TEST SPLIT
-    # ============================================================
     number_papers = (data["paper"].num_nodes)
     indices = torch.randperm(number_papers, device=device)
     train_size = int(0.8 * number_papers)
@@ -392,9 +278,6 @@ for plmodel in plm.keys():
     print("\nTraining papers:", len(train_idx))
     print("Testing papers:", len(test_idx))
 
-    # ============================================================
-    # 24. TRAINING
-    # ============================================================
 
     print("\nStarting training...")
 
@@ -419,9 +302,6 @@ for plmodel in plm.keys():
               f"Test Loss: {test_loss.item():.4f}"
               )
 
-    # ============================================================
-    # 25. FINAL PREDICTIONS AND EVALUATION
-    # ============================================================
     import time
     start = time.time()
     model.eval()
@@ -438,9 +318,6 @@ for plmodel in plm.keys():
     # ------------------------------------------------------------
     y_test = actual_ratings[test_idx.cpu().numpy()]
     pred_test = predictions[test_idx.cpu().numpy()]
-    # ============================================================
-    # 26. REGRESSION METRICS
-    # ============================================================
     from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
     mse = mean_squared_error(y_test, pred_test)
     mae = mean_absolute_error(y_test, pred_test)
@@ -450,18 +327,10 @@ for plmodel in plm.keys():
     print("TEST SET PERFORMANCE", csv, plmodel)
     print("========================================")
     print(f"MSE  : {mse:.4f}\tMAE  : {mae:.4f}\tR²   : {r2:.4f}\tRMSE : {rmse:.4f}")
-    # ============================================================
-    # 27. SAVE GNN PAPER EMBEDDINGS
-    # ============================================================
-    # np.save("/content/drive/MyDrive/"+csv+"_"+plmodel+"_gnn_paper_embeddings.npy", paper_embeddings_gnn)
     np.save("./" + csv + "_" + plmodel + "_gnn_paper_embeddings.npy", paper_embeddings_gnn)
-    # ============================================================
-    # 28. SAVE PREDICTIONS
-    # ============================================================
     result = pd.DataFrame({"submission_id": paper_ids, "actual_rating": actual_ratings, "predicted_rating": predictions})
     # Add rounded prediction
     result["predicted_rating_rounded"] = np.rint(result["predicted_rating"]).astype(int)
-    # result.to_csv("/content/drive/MyDrive/"+csv+"_"+plmodel+"__gnn_predictions.csv", index=False)
     result.to_csv("./" + csv + "_" + plmodel + "__gnn_predictions.csv", index=False)
     print("\nResults saved.")
     print(result.head(10))
