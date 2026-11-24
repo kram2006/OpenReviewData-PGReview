@@ -38,7 +38,7 @@ Windows (NVIDIA GPU) PowerShell:
 powershell -ExecutionPolicy Bypass -File .\run.ps1
 ```
 
-Both scripts create `.venv`, install `requirements.txt`, and run `python rk_gnn.py`. The default run loops over three datasets and three language models:
+Both scripts create a virtual environment, install `requirements.txt`, and run `python rk_gnn.py`. The default run loops over three datasets and three language models:
 
 - `allenai/scibert_scivocab_uncased`
 - `KISTI-AI/Scideberta-full`

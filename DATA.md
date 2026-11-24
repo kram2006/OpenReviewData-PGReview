@@ -64,7 +64,6 @@ Review release dates stated by the author guides: 2023-11-10, 2024-11-13, and 20
 OpenReview references:
 
 - API: https://api2.openreview.net
-- Notes endpoint: https://api2.openreview.net/notes
 - Retrieval guide: https://docs.openreview.net/how-to-guides/data-retrieval-and-modification/how-to-get-all-notes-for-submissions-reviews-rebuttals-etc
 - CSV export guide: https://docs.openreview.net/how-to-guides/data-retrieval-and-modification/how-to-export-all-reviews-into-a-csv
 
