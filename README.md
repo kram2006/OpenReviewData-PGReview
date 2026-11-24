@@ -13,7 +13,7 @@ The artifact contains source code and open review datasets. The paper contains t
 |---|---|
 | `rk_gnn.py` | End-to-end preprocessing, embedding, GNN training, evaluation, and output generation |
 | `run.sh` | Fresh-environment setup and run script for Linux |
-| `run.ps1` | Fresh-environment setup and run script for Windows (NVIDIA GPU) PowerShell |
+| `run.ps1` | Fresh-environment setup and run script for PowerShell on Windows (NVIDIA GPU) |
 | `requirements.txt` | Direct Python dependencies used by the setup scripts |
 | `requirements-lock.txt` | Full frozen dependency set for the tested environment |
 | `iclr_reviews_24.csv` | ICLR 2024 review records |
@@ -34,7 +34,7 @@ bash run.sh
 
 `run.sh` has not been tested; only the Windows 11 + GPU install and import check was done.
 
-Windows (NVIDIA GPU) PowerShell:
+PowerShell on Windows (NVIDIA GPU):
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\run.ps1
