@@ -30,15 +30,5 @@ keywords:
   - graph neural networks
   - natural language processing
   - reproducibility
-preferred-citation:
-  type: conference-paper
-  title: "Reliability of graph based consolidation of reviews"
-  year: 2027
-  authors:
-    - family-names: Alladaboina
-      given-names: Suhas
-    - family-names: Kalari
-      given-names: Ramakrishna Narasimha
-    - family-names: Kundu
-      given-names: Suman
-  collection-title: "Proceedings of the VLDB Endowment"
+license: CC-BY-4.0
+notes: "Under review at VLDB 2027."
